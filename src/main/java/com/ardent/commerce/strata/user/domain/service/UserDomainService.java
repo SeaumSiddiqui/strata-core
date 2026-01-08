@@ -5,7 +5,6 @@ import com.ardent.commerce.strata.user.domain.model.User;
 import com.ardent.commerce.strata.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 /**
  * Domain Service: Stateless business logic.
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @RequiredArgsConstructor
-@Service
 public class UserDomainService {
     private final UserRepository userRepository;
 

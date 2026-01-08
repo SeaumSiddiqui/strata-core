@@ -35,22 +35,22 @@ public class CreateUserApplicationService implements ApplicationService<CreateUs
     @Override
     @Transactional // Ensuring DB save and Event publish happen in one task
     public UserResponse execute(CreateUserRequest request) {
-        log.info("Creating new user with email: {}", request.getEmail());
+        log.info("Creating new user with email: {}", request.email());
 
         // Check if email already exists
-        Email email = Email.of(request.getEmail());
+        Email email = Email.of(request.email());
         if (userRepository.existsByEmail(email)) {
-            log.warn("User registration failed: Email {} already registered", request.getEmail());
-            throw new IllegalArgumentException("Email already registered: " + request.getEmail());
+            log.warn("User registration failed: Email {} already registered", request.email());
+            throw new IllegalArgumentException("Email already registered: " + request.email());
         }
 
         // Create user aggregate
         User user = User.create(
-                request.getKeycloakId(),
+                request.keycloakId(),
                 email,
-                Phone.of(request.getPhone()),
-                request.getFirstName(),
-                request.getLastName()
+                Phone.of(request.phone()),
+                request.firstName(),
+                request.lastName()
         );
 
         // Save

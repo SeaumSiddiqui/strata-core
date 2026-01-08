@@ -1,6 +1,8 @@
 package com.ardent.commerce.strata.shared.infrastructure.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -11,15 +13,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
+import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
+
 /**
- * Global Exception Handler: Catches and formats all globally used exceptions.
+ * Global exception handler.
+ * Catches framework exceptions and unhandled domain exceptions.
+ *
+ * @Order(HIGHEST_PRECEDENCE) = This fires FIRST for ALL exceptions
+ * Then context-specific handlers override if needed
  */
 @Slf4j
 @RestControllerAdvice
+@Order(HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
-
     /**
-     * Handles @Valid failures on DTO fields
+     * Handles DTO validation errors (@Valid failures).
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
@@ -38,21 +46,11 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
-        log.warn("Business rule violation: {}", ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(
-                        HttpStatus.BAD_REQUEST.value(),
-                        "Business rule violation",
-                        ex.getMessage(),
-                        LocalDateTime.now()
-                ));
-    }
-
+    /**
+     * Handle authentication errors
+     */
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<?> handleAuthenticationException(AuthenticationException ex) {
+    public ResponseEntity<?> handleAuthentication(AuthenticationException ex) {
         log.warn("Authentication failed: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
@@ -64,8 +62,11 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    /**
+     * Fallback: Catch any unhandled exception
+     */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGenericException(Exception ex) {
+    public ResponseEntity<?> handleGeneric(Exception ex) {
         log.error("Unexpected error: ", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

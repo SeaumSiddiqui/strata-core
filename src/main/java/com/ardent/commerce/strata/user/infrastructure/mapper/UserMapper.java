@@ -23,7 +23,7 @@ public class UserMapper {
                 user.getId().value(),
                 user.getKeycloakId(),
                 user.getEmail().value(),
-                user.getPhone().getFullNumber(),
+                user.getPhone().value(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getCreatedAt(),
@@ -56,7 +56,7 @@ public class UserMapper {
                 user.getEmail().value(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getPhone().getFullNumber(),
+                user.getPhone().value(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );

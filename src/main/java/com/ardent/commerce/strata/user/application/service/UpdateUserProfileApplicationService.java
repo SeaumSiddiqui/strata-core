@@ -4,7 +4,6 @@ import com.ardent.commerce.strata.user.application.dto.UpdateUserProfileRequest;
 import com.ardent.commerce.strata.user.application.dto.UserResponse;
 import com.ardent.commerce.strata.user.domain.model.Phone;
 import com.ardent.commerce.strata.user.domain.model.User;
-import com.ardent.commerce.strata.user.domain.model.UserId;
 import com.ardent.commerce.strata.user.domain.repository.UserRepository;
 import com.ardent.commerce.strata.user.infrastructure.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -41,9 +40,9 @@ public class UpdateUserProfileApplicationService {
 
         // Update profile
         user.updateUserProfile(
-                request.getFirstName(),
-                request.getLastName(),
-                Phone.of(request.getPhone())
+                request.firstName(),
+                request.lastName(),
+                Phone.of(request.phone())
                 );
 
         // Save

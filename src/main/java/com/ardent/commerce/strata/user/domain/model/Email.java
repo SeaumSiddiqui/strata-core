@@ -9,7 +9,7 @@ import lombok.NonNull;
  */
 public record Email(@NonNull String value) implements ValueObject {
     public Email{
-        if (!value.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+        if (!value.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new IllegalArgumentException("Invalid email format");
         }
     }

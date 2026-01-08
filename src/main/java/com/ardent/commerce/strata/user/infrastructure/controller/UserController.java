@@ -27,7 +27,7 @@ import java.util.UUID;
 @RestController
 public class UserController {
 
-    private final CreateUserApplicationService crateUserService;
+    private final CreateUserApplicationService createUserService;
     private final FindUserApplicationService findUserService;
     private final UpdateUserProfileApplicationService updateUserService;
 
@@ -37,9 +37,9 @@ public class UserController {
      */
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        log.info("POST /api/users - Creating user with email: {}", request.getEmail());
+        log.info("POST /api/users - Creating user with email: {}", request.email());
 
-        UserResponse response = crateUserService.execute(request);
+        UserResponse response = createUserService.execute(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

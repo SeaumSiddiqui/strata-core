@@ -1,8 +1,10 @@
 package com.ardent.commerce.strata.user.domain.exception;
 
+import com.ardent.commerce.strata.shared.domain.exception.DomainException;
+
 import java.util.UUID;
 
-public class UserNotFoundException extends RuntimeException{
+public class UserNotFoundException extends DomainException {
     public UserNotFoundException(UUID userId) {
         super("User not found with ID: " + userId);
     }
