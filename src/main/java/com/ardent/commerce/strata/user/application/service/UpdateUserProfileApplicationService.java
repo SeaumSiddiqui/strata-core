@@ -2,6 +2,7 @@ package com.ardent.commerce.strata.user.application.service;
 
 import com.ardent.commerce.strata.user.application.dto.UpdateUserProfileRequest;
 import com.ardent.commerce.strata.user.application.dto.UserResponse;
+import com.ardent.commerce.strata.user.domain.exception.UserNotFoundException;
 import com.ardent.commerce.strata.user.domain.model.Phone;
 import com.ardent.commerce.strata.user.domain.model.User;
 import com.ardent.commerce.strata.user.domain.repository.UserRepository;
@@ -34,7 +35,7 @@ public class UpdateUserProfileApplicationService {
     public UserResponse execute(UUID keycloakId, UpdateUserProfileRequest request) {
         // Load aggregate
         User user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(()-> new RuntimeException("User not found with keycloak ID: " + keycloakId));
+                .orElseThrow(()-> UserNotFoundException.byKeycloakId(keycloakId));
 
         log.info("Updating user profile for ID: {}", user.getId().value());
 

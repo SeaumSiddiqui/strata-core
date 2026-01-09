@@ -1,6 +1,7 @@
 package com.ardent.commerce.strata.user.application.service;
 
 import com.ardent.commerce.strata.user.application.dto.UserResponse;
+import com.ardent.commerce.strata.user.domain.exception.UserNotFoundException;
 import com.ardent.commerce.strata.user.domain.model.UserId;
 import com.ardent.commerce.strata.user.domain.repository.UserRepository;
 import com.ardent.commerce.strata.user.infrastructure.mapper.UserMapper;
@@ -27,7 +28,7 @@ public class FindUserApplicationService {
         log.debug("Fetching user by ID: {}", userId);
         return userRepository.findById(UserId.of(userId))
                 .map(userMapper::toResponse)
-                .orElseThrow(()-> new RuntimeException("User not found with ID: " + userId));
+                .orElseThrow(()-> new UserNotFoundException(userId));
     }
 
     public UserResponse findByKeycloakId(UUID keycloakId) {
@@ -35,6 +36,6 @@ public class FindUserApplicationService {
 
         return userRepository.findByKeycloakId(keycloakId)
                 .map(userMapper::toResponse)
-                .orElseThrow(()-> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(()-> UserNotFoundException.byKeycloakId(keycloakId));
     }
 }

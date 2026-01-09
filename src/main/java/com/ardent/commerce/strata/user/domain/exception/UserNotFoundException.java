@@ -12,4 +12,8 @@ public class UserNotFoundException extends DomainException {
     public UserNotFoundException(String identifier) {
         super("User not found: " + identifier);
     }
+
+    public static UserNotFoundException byKeycloakId(UUID keycloakId) {
+        return new UserNotFoundException("Keycloak ID: " + keycloakId);
+    }
 }

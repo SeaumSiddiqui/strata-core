@@ -85,7 +85,7 @@ public class User extends AggregateRoot {
      */
     public void changeEmail(@NonNull Email newEmail) {
         if (newEmail.equals(this.email)) {
-            throw new IllegalArgumentException("Updated Email can't be the same as current email");
+            throw new IllegalArgumentException("New Email cannot be same as current");
         }
 
         this.email = newEmail;

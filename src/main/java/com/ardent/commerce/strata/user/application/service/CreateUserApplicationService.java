@@ -3,6 +3,7 @@ package com.ardent.commerce.strata.user.application.service;
 import com.ardent.commerce.strata.shared.application.ApplicationService;
 import com.ardent.commerce.strata.user.application.dto.CreateUserRequest;
 import com.ardent.commerce.strata.user.application.dto.UserResponse;
+import com.ardent.commerce.strata.user.domain.exception.DuplicateEmailException;
 import com.ardent.commerce.strata.user.domain.model.Email;
 import com.ardent.commerce.strata.user.domain.model.Phone;
 import com.ardent.commerce.strata.user.domain.model.User;
@@ -40,8 +41,7 @@ public class CreateUserApplicationService implements ApplicationService<CreateUs
         // Check if email already exists
         Email email = Email.of(request.email());
         if (userRepository.existsByEmail(email)) {
-            log.warn("User registration failed: Email {} already registered", request.email());
-            throw new IllegalArgumentException("Email already registered: " + request.email());
+            throw new DuplicateEmailException(request.email());
         }
 
         // Create user aggregate
