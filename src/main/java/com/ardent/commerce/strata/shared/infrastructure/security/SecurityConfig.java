@@ -1,4 +1,4 @@
-package com.ardent.commerce.strata.shared.infrastructure.config;
+package com.ardent.commerce.strata.shared.infrastructure.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +8,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-
 
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -20,8 +19,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(request -> request
+                        // Public endpoints - no authentication
                         .requestMatchers("/api/public/**", "/api/users/health").permitAll()
+                        // Documentation endpoints - no authentication
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Admin endpoints - requires ADMIN role
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
