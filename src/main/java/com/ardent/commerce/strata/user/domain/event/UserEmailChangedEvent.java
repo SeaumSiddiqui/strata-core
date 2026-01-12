@@ -6,18 +6,19 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
-public record UserProfileUpdatedEvent(
-        UUID userId,
-        String email,
-        LocalDateTime occurredAt) implements DomainEvent {
 
-    public UserProfileUpdatedEvent {
-        Objects.requireNonNull(userId, "userId must not be null");
+public record UserEmailChangedEvent(
+        UUID keycloakId,
+        String email,
+        LocalDateTime occurredAt) implements DomainEvent{
+
+    public UserEmailChangedEvent {
+        Objects.requireNonNull(keycloakId, "keycloakId must not be null");
         Objects.requireNonNull(email, "email must not be null");
         Objects.requireNonNull(occurredAt, "occurredAt must not be null");
     }
 
-    public static final String EVENT_NAME = "UserProfileUpdatedEvent";
+    public static final String EVENT_NAME = "UserEmailChangeEvent";
 
     @Override
     public String eventName() {

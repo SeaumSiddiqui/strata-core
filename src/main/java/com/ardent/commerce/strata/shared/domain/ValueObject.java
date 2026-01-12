@@ -1,8 +1,7 @@
 package com.ardent.commerce.strata.shared.domain;
 
 /**
- * Base class for domain value objects.
- * Value objects are immutable and identified by their values.
+ * Base class for all domain value objects.
  */
 public interface ValueObject {
 }

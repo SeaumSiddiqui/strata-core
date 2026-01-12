@@ -1,10 +1,16 @@
 package com.ardent.commerce.strata.user.domain.service;
 
 import com.ardent.commerce.strata.user.domain.exception.DuplicateEmailException;
+import com.ardent.commerce.strata.user.domain.exception.UserInactiveException;
+import com.ardent.commerce.strata.user.domain.exception.UserNotFoundException;
 import com.ardent.commerce.strata.user.domain.model.Email;
 import com.ardent.commerce.strata.user.domain.model.User;
+import com.ardent.commerce.strata.user.domain.model.UserRole;
 import com.ardent.commerce.strata.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Domain Service: Stateless business logic.
@@ -15,16 +21,26 @@ import lombok.RequiredArgsConstructor;
 public class UserDomainService {
     private final UserRepository userRepository;
 
-    /**
-     * Business rule: Change user email
-     */
-    public void changeEmail(User user, Email newEmail) {
+    public User fetchActiveByKeycloakId(UUID keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(()-> UserNotFoundException.byKeycloakId(keycloakId));
 
+        if (!user.isActive()) {
+            throw new UserInactiveException(keycloakId);
+        }
+        return user;
+    }
+
+    public void assertEmailIsUnique(Email newEmail) {
         if (userRepository.existsByEmail(newEmail)) {
             throw new DuplicateEmailException(newEmail.value());
         }
-        user.changeEmail(newEmail);
-        userRepository.save(user);
+    }
+
+    public void assertBaseUserRole(Set<UserRole> roles) {
+        if (!roles.contains(UserRole.of(UserRole.RoleType.CUSTOMER))) {
+            throw new IllegalArgumentException("TODO: better exception need");
+        }
     }
 
 }

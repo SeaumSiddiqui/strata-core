@@ -1,35 +1,27 @@
 package com.ardent.commerce.strata.user.domain.event;
 
 import com.ardent.commerce.strata.shared.domain.DomainEvent;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Value;
-
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
-/**
- * Domain Event: Fired when user is created.
- * Other bounded contexts listen to this event.
- */
-@Value
-public class UserCreatedEvent implements DomainEvent {
-    UUID userId;
-    String email;
-    UUID keycloakId;
-    @Getter(onMethod_ = @Override)
-    LocalDateTime occurredAt;
+public record UserCreatedEvent(
+    UUID userId,
+    String email,
+    UUID keycloakId,
+    LocalDateTime occurredAt) implements DomainEvent{
 
-    // Custom constructor to handle the timestamp automatically
-    public UserCreatedEvent(@NonNull UUID userId, @NonNull String email, @NonNull UUID keycloakId) {
-        this.userId = userId;
-        this.email = email;
-        this.keycloakId = keycloakId;
-        this.occurredAt = LocalDateTime.now();
+    public UserCreatedEvent {
+        Objects.requireNonNull(userId, "userId must not be null");
+        Objects.requireNonNull(email, "email must not be null");
+        Objects.requireNonNull(keycloakId, "keycloakId must not be null");
+        Objects.requireNonNull(occurredAt, "occurredAt must not be null");
     }
+
+    public static final String EVENT_NAME = "UserCreatedEvent";
 
     @Override
     public String eventName() {
-        return this.getClass().getSimpleName();
+        return EVENT_NAME;
     }
 }

@@ -1,12 +1,15 @@
 package com.ardent.commerce.strata.user.domain.model;
 
 import com.ardent.commerce.strata.shared.domain.AggregateRoot;
-import com.ardent.commerce.strata.user.domain.event.UserCreatedEvent;
-import com.ardent.commerce.strata.user.domain.event.UserProfileUpdatedEvent;
+import com.ardent.commerce.strata.user.domain.event.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
+
+import static com.ardent.commerce.strata.user.domain.event.UserRoleChangedEvent.RoleChangeType.ASSIGNED;
+import static com.ardent.commerce.strata.user.domain.event.UserRoleChangedEvent.RoleChangeType.REMOVED;
 
 /**
  * User Aggregate Root.
@@ -40,20 +43,29 @@ public class User extends AggregateRoot {
     private String lastName;
 
     @NonNull
+    @ToString.Include
+    private Set<UserRole> roles;
+
+    @NonNull
     private LocalDateTime createdAt;
     @NonNull
     private LocalDateTime updatedAt;
+
+    @ToString.Include
+    private  boolean isActive;
+
+    private LocalDateTime deletedAt;
 
     /**
      * Factory method: Create new user.
      * Called during user registration flow.
      */
-    public static User create(UUID keycloakId, Email email, Phone phone, String firstName, String lastName) {
+    public static User create(UUID keycloakId, Email email, Phone phone, String firstName, String lastName, Set<UserRole> roles) {
         UserId id = UserId.generate();
         LocalDateTime now = LocalDateTime.now();
 
-        User user = new User(id, keycloakId, email, phone, firstName, lastName, now, now);
-        user.addDomainEvent(new UserCreatedEvent(id.value(), email.value(), keycloakId));
+        User user = new User(id, keycloakId, email, phone, firstName, lastName, roles, now, now, true, null);
+        user.addDomainEvent(new UserCreatedEvent(id.value(), email.value(), keycloakId, now));
 
         return user;
     }
@@ -62,14 +74,15 @@ public class User extends AggregateRoot {
      * Factory method: Reconstruct user from database (no events).
      * Called during repository fetch.
      */
-    public static User reconstruct(UserId id, UUID keycloakId, Email email, Phone phone, String firstName,
-                                   String lastName, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new User(id, keycloakId, email, phone, firstName, lastName, createdAt, updatedAt);
+    public static User reconstruct(UserId id, UUID keycloakId, Email email, Phone phone, String firstName, String lastName,
+                                   Set<UserRole> roles, LocalDateTime createdAt, LocalDateTime updatedAt, boolean isActive,
+                                   LocalDateTime deletedAt) {
+        return new User(id, keycloakId, email, phone, firstName, lastName, roles, createdAt, updatedAt, isActive, deletedAt);
     }
 
     /**
      * Business rule: Update user profile.
-     * Only firstName, lastName, phone can be changed.
+     * Only firstName, lastName, phone can be updated.
      */
     public void updateUserProfile(String firstName, String lastName, @NonNull Phone phone) {
         this.firstName = firstName;
@@ -77,7 +90,7 @@ public class User extends AggregateRoot {
         this.phone = phone;
         this.updatedAt = LocalDateTime.now();
 
-        addDomainEvent(new UserProfileUpdatedEvent(id.value(), email.value()));
+        addDomainEvent(new UserProfileUpdatedEvent(id.value(), email.value(), updatedAt));
     }
 
     /**
@@ -91,6 +104,54 @@ public class User extends AggregateRoot {
         this.email = newEmail;
         this.updatedAt = LocalDateTime.now();
 
-        addDomainEvent(new UserProfileUpdatedEvent(id.value(), newEmail.value()));
+        addDomainEvent(new UserEmailChangedEvent(keycloakId, newEmail.value(), updatedAt));
     }
+
+    public void assignRole(@NonNull UserRole roleToAdd) {
+        if (this.roles.contains(roleToAdd)) {
+            return;
+        }
+
+        this.roles.add(roleToAdd);
+        this.updatedAt = LocalDateTime.now();
+
+        addDomainEvent(new UserRoleChangedEvent(keycloakId, roleToAdd.value().name(), ASSIGNED, updatedAt));
+    }
+
+    public void removeRole(@NonNull UserRole roleToRemove) {
+        if (this.roles.size() <= 1) {
+            throw new IllegalArgumentException("User must have at least one role assigned");
+        }
+
+        if (!this.roles.contains(roleToRemove)) {
+            throw new IllegalArgumentException("Role " + roleToRemove + " not assigned to this user");
+        }
+
+        if (roleToRemove.equals(UserRole.of(UserRole.RoleType.CUSTOMER))) {
+            throw new IllegalArgumentException("User base role " + roleToRemove.value().name() + " cannot be removed");
+        }
+
+        this.roles.remove(roleToRemove);
+        this.updatedAt = LocalDateTime.now();
+
+        addDomainEvent(new UserRoleChangedEvent(keycloakId, roleToRemove.value().name(), REMOVED, updatedAt));
+    }
+
+    /**
+     * Business rule: Soft Delete from application DB (Deactivate Account).
+     * Already removed form Keycloak DB.
+     */
+    public void markAsDeleted() {
+        if (!this.isActive) {
+            throw new IllegalArgumentException("User already deleted and marked as inactive");
+        }
+        this.isActive = false;
+
+        LocalDateTime now = LocalDateTime.now();
+        this.deletedAt = now;
+        this.updatedAt = now;
+
+        addDomainEvent(new UserDeletedEvent(keycloakId, email.value(), now));
+    }
+
 }

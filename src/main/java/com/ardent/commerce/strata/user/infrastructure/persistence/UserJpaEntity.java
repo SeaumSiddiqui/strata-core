@@ -1,11 +1,13 @@
 package com.ardent.commerce.strata.user.infrastructure.persistence;
 
+import com.ardent.commerce.strata.user.domain.model.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -41,9 +43,21 @@ public class UserJpaEntity {
     @Column(name = "last_name")
     private String lastName;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role_name")
+    @Enumerated(EnumType.STRING)
+    private Set<UserRole.RoleType> roles;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "active", nullable = false)
+    private boolean isActive;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

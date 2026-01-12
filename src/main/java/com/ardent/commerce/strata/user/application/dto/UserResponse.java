@@ -1,6 +1,7 @@
 package com.ardent.commerce.strata.user.application.dto;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 public record UserResponse(
@@ -9,6 +10,9 @@ public record UserResponse(
         String phone,
         String firstName,
         String lastName,
+        Set<String> rolesForResponse,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedAt,
+        boolean isActive,
+        LocalDateTime deletedAt) {
 }

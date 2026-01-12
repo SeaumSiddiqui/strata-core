@@ -13,7 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Application Service: On find user
+ * Application Service: Find User.
+ * * Steps:
+ * 1. Query the repository using specific identifier (ID or Keycloak ID)
+ * 2. Handle missing users by throwing a Domain Exception
+ * 3. Map the Domain Aggregate to Response DTO
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -38,4 +42,5 @@ public class FindUserApplicationService {
                 .map(userMapper::toResponse)
                 .orElseThrow(()-> UserNotFoundException.byKeycloakId(keycloakId));
     }
+
 }

@@ -2,10 +2,10 @@ package com.ardent.commerce.strata.user.application.service;
 
 import com.ardent.commerce.strata.user.application.dto.UpdateUserProfileRequest;
 import com.ardent.commerce.strata.user.application.dto.UserResponse;
-import com.ardent.commerce.strata.user.domain.exception.UserNotFoundException;
 import com.ardent.commerce.strata.user.domain.model.Phone;
 import com.ardent.commerce.strata.user.domain.model.User;
 import com.ardent.commerce.strata.user.domain.repository.UserRepository;
+import com.ardent.commerce.strata.user.domain.service.UserDomainService;
 import com.ardent.commerce.strata.user.infrastructure.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Application Service: On create update.
+ * Application Service: On user profile update.
  * Steps:
  * 1. Load aggregate
  * 2. Update profile
@@ -27,34 +27,30 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Service
 public class UpdateUserProfileApplicationService {
+    private final UserDomainService userDomainService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserEventPublisher eventPublisher;
 
     @Transactional
     public UserResponse execute(UUID keycloakId, UpdateUserProfileRequest request) {
-        // Load aggregate
-        User user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(()-> UserNotFoundException.byKeycloakId(keycloakId));
+        User user = userDomainService.fetchActiveByKeycloakId(keycloakId);
 
         log.info("Updating user profile for ID: {}", user.getId().value());
 
-        // Update profile
         user.updateUserProfile(
                 request.firstName(),
                 request.lastName(),
                 Phone.of(request.phone())
                 );
 
-        // Save
         userRepository.save(user);
         log.info("User updated for ID: {}", user.getId().value());
 
-        // Publish events
         user.getDomainEvents().forEach(eventPublisher::publish);
         user.clearDomainEvents();
 
-        // Return response
         return userMapper.toResponse(user);
     }
+
 }

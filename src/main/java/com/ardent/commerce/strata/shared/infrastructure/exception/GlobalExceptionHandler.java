@@ -1,7 +1,6 @@
 package com.ardent.commerce.strata.shared.infrastructure.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +16,6 @@ import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
 
 /**
  * Global exception handler.
- * Catches framework exceptions and unhandled domain exceptions.
  *
  * @Order(HIGHEST_PRECEDENCE) = This fires FIRST for ALL exceptions
  * Then context-specific handlers override if needed

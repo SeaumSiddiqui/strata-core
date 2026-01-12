@@ -9,8 +9,8 @@ import lombok.NonNull;
  */
 public record Phone(@NonNull String value) implements ValueObject {
     public Phone {
-        if (value.isBlank()) {
-            throw new IllegalArgumentException("Phone cannot be blank");
+        if (value == null && value.isBlank()) {
+            throw new IllegalArgumentException("Phone is mandatory and cannot be blank");
         }
         String digitsOnly = value.replaceAll("\\D", "");
         if (digitsOnly.length() < 10) {

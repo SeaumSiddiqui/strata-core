@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://strata-db-ardent-strata.c.aivencloud.com:17319/defaultdb?ssl=require
+    username: avnadmin
+    password: AVNS_eE-dlnSnO46B6y7nFon
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/ardent-strata
+app:
+  keycloak:
+    server-url: ${KEYCLOAK_URL:http://localhost:8080}
+    realm: ardent-strata
+    client-id: strata-server
+    client-secret: ${KEYCLOAK_SECRET:your-client-secret-here}
+
+jwt:
+  auth:
+    converter:
+      resource-id: strata-server
+      principal-attribute: preferred_username
+
+server:
+  port: 8090 # Application run port: 8090
+  error:
+    include-message: always

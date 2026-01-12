@@ -1,9 +1,9 @@
 package com.ardent.commerce.strata.user.application.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.ardent.commerce.strata.user.domain.model.UserRole;
+import jakarta.validation.constraints.*;
 
+import java.util.Set;
 import java.util.UUID;
 
 public record CreateUserRequest(
@@ -21,5 +21,16 @@ public record CreateUserRequest(
         String firstName,
 
         @NotBlank(message = "Last name is required")
-        String lastName) {
+        String lastName,
+
+        @Size(min = 1, message = "User must have at least one role on creation")
+        Set<UserRole.RoleType> roles,
+
+        @NotBlank(message = "Password is required")
+        @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters")
+        @Pattern(
+                regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+                message = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+        )
+        String password) {
 }
