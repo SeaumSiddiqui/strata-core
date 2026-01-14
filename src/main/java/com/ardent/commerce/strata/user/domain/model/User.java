@@ -137,6 +137,12 @@ public class User extends AggregateRoot {
         addDomainEvent(new UserRoleChangedEvent(keycloakId, roleToRemove.value().name(), REMOVED, updatedAt));
     }
 
+    public void recordPasswordChange() {
+        this.updatedAt = LocalDateTime.now();
+
+        addDomainEvent(new UserPasswordChangeEvent(keycloakId, updatedAt));
+    }
+
     /**
      * Business rule: Soft Delete from application DB (Deactivate Account).
      * Already removed form Keycloak DB.

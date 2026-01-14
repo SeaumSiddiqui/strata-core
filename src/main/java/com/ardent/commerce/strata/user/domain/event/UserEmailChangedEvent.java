@@ -24,4 +24,5 @@ public record UserEmailChangedEvent(
     public String eventName() {
         return EVENT_NAME;
     }
+
 }

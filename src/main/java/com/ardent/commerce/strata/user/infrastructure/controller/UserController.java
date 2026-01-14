@@ -30,6 +30,7 @@ public class UserController {
     private final FindUserApplicationService findUserService;
     private final UpdateUserProfileApplicationService updateUserService;
     private final UpdateUserEmailApplicationService updateEmailService;
+    private final UpdateUserPasswordApplicationService updatePasswordService;
     private final ManageUserRoleApplicationService userRoleService;
     private final DeleteUserApplicationService deleteUserService;
 
@@ -86,6 +87,15 @@ public class UserController {
 
         UUID keycloakId = UUID.fromString(jwt.getSubject());
         UserResponse response = updateEmailService.execute(keycloakId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<UserResponse> updateUserPassword(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateUserPasswordRequest request) {
+        log.info("PUT api/users/password - Updating user password");
+
+        UUID keycloakId = UUID.fromString(jwt.getSubject());
+        UserResponse response = updatePasswordService.execute(keycloakId, request);
         return ResponseEntity.ok(response);
     }
 

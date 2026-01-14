@@ -2,9 +2,11 @@ package com.ardent.commerce.strata.user.infrastructure.identity.keycloak;
 
 import com.ardent.commerce.strata.user.domain.event.UserDeletedEvent;
 import com.ardent.commerce.strata.user.domain.event.UserEmailChangedEvent;
+import com.ardent.commerce.strata.user.domain.event.UserPasswordChangeEvent;
 import com.ardent.commerce.strata.user.domain.event.UserRoleChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Service
 public class KeycloakUserIdentityService implements UserIdentityService {
-    private final Keycloak keycloak;
+    private final Keycloak keycloakAdminClient;
     private final KeycloakProperties keycloakProperties;
 
     @Override
@@ -39,6 +40,24 @@ public class KeycloakUserIdentityService implements UserIdentityService {
     @Override
     public void updateKeycloakUserRole(UUID uuid, String role) {
 
+    }
+
+    @Override
+    public void updateKeycloakUserPassword(UUID keycloakId, String newPassword) {
+        CredentialRepresentation credential = new CredentialRepresentation();
+        credential.setType(CredentialRepresentation.PASSWORD);
+        credential.setValue(newPassword);
+        credential.setTemporary(false);
+
+        try {
+            keycloakAdminClient.realm(keycloakProperties.getRealm())
+                    .users()
+                    .get(keycloakId.toString())
+                    .resetPassword(credential);
+        } catch (Exception e) {
+            log.error("Failed to reset password in Keycloak for user: {}", keycloakId);
+            throw new IdentityProviderException("Could not update user password in keycloak");
+        }
     }
 
     public void verifyUserCredentials(String email, String password) {
