@@ -1,7 +1,5 @@
 package com.ardent.commerce.strata.user.domain.identity;
 
-import jakarta.validation.constraints.NotBlank;
-
 import java.util.UUID;
 
 public interface UserIdentityService {
@@ -14,5 +12,7 @@ public interface UserIdentityService {
 
     void updateKeycloakUserRole(UUID uuid, String role);
 
-    void updateKeycloakUserPassword(UUID keycloakId, String s);
+    void updateKeycloakUserPassword(UUID keycloakId, String password);
+
+    void sendPasswordResetEmail(String email);
 }

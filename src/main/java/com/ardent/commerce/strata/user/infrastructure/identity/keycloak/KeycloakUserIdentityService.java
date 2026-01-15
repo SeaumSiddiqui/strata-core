@@ -10,16 +10,19 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class KeycloakUserIdentityService implements UserIdentityService {
-    private final Keycloak keycloakAdminClient;
+    private final Keycloak keycloak;
     private final KeycloakProperties keycloakProperties;
 
     @Override
@@ -50,13 +53,51 @@ public class KeycloakUserIdentityService implements UserIdentityService {
         credential.setTemporary(false);
 
         try {
-            keycloakAdminClient.realm(keycloakProperties.getRealm())
+            keycloak.realm(keycloakProperties.getRealm())
                     .users()
                     .get(keycloakId.toString())
                     .resetPassword(credential);
         } catch (Exception e) {
             log.error("Failed to reset password in Keycloak for user: {}", keycloakId);
             throw new IdentityProviderException("Could not update user password in keycloak");
+        }
+    }
+
+    @Override
+    public void sendPasswordResetEmail(String email) {
+        log.info("Sending password reset instruction to: {}", email);
+
+        try {
+            List<UserRepresentation> users = keycloak.realm(keycloakProperties.getRealm())
+                    .users().search(email, 0, 1);
+
+            if (users.isEmpty()) {
+                log.warn("user not found for password reset: {}", email);
+                return; // Silent return to prevent enumeration
+            }
+
+            UserRepresentation user = users.getFirst();
+
+            List<String> requiredActions = new ArrayList<>();
+            requiredActions.add("UPDATE_PASSWORD"); // Force password change on next login
+            user.setRequiredActions(requiredActions);
+
+            keycloak.realm(keycloakProperties.getRealm())
+                    .users()
+                    .get(user.getId())
+                    .update(user);
+
+            // Sending verification email
+            keycloak.realm(keycloakProperties.getRealm())
+                    .users()
+                    .get(user.getId())
+                    .executeActionsEmail(requiredActions);
+
+            log.info("Password reset email sent to: {}", email);
+
+        } catch (Exception e) {
+            log.error("Failed to sent password reset email: {}", email, e);
+            throw new IdentityProviderException("Failed to sent password reset email", e);
         }
     }
 
@@ -80,4 +121,5 @@ public class KeycloakUserIdentityService implements UserIdentityService {
             throw new IdentityProviderException("Keycloak identity service is currently unavailable");
         }
     }
+
 }

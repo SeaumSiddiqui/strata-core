@@ -30,6 +30,7 @@ public class FindUserApplicationService {
 
     public UserResponse findById(UUID userId) {
         log.debug("Fetching user by ID: {}", userId);
+
         return userRepository.findById(UserId.of(userId))
                 .map(userMapper::toResponse)
                 .orElseThrow(()-> new UserNotFoundException(userId));

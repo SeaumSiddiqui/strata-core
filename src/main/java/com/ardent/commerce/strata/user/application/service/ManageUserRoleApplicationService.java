@@ -14,6 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Application Service: Manage user roles.
+ * Default role - CUSTOMER assigned on creation, nonremovable.
+ * Role ADMIN, STAFF can be assigned or removed.
+
+ * Steps:
+ * 1. Load aggregate with userId
+ * 2. Assign/Remove role
+ * 3. Save
+ * 4. Publish events
+ * 5. Return response
+ */
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -24,15 +36,15 @@ public class ManageUserRoleApplicationService {
     private final UserMapper userMapper;
 
     @Transactional
-    public UserResponse assignUserRole(UUID keycloakId, UpdateUserRoleRequest request) {
-        log.info("Assigning new role {} to user: {}", request.roleName(), keycloakId);
+    public UserResponse assignUserRole(UUID userId, UpdateUserRoleRequest request) {
+        log.info("Assigning new role {} to user: {}", request.roleName(), userId);
 
-        User user = userDomainService.fetchActiveByKeycloakId(keycloakId);
+        User user = userDomainService.fetchActiveByUserId(userId);
         UserRole roleToAdd = UserRole.from(request.roleName());
 
         user.assignRole(roleToAdd);
         userRepository.save(user);
-        log.info("Successfully assigned new role {} to user: {}", request.roleName(), keycloakId);
+        log.info("Successfully assigned new role {} to user: {}", request.roleName(), userId);
 
         user.getDomainEvents().forEach(userEventPublisher::publish);
         user.clearDomainEvents();
@@ -41,15 +53,15 @@ public class ManageUserRoleApplicationService {
     }
 
     @Transactional
-    public UserResponse removeUserRole(UUID keycloakId, UpdateUserRoleRequest request) {
-        log.info("Removing existing role {} from user: {}", request.roleName(), keycloakId);
+    public UserResponse removeUserRole(UUID userId, UpdateUserRoleRequest request) {
+        log.info("Removing existing role {} from user: {}", request.roleName(), userId);
 
-        User user = userDomainService.fetchActiveByKeycloakId(keycloakId);
+        User user = userDomainService.fetchActiveByUserId(userId);
         UserRole roleToRemove = UserRole.from(request.roleName());
 
         user.removeRole(roleToRemove);
         userRepository.save(user);
-        log.info("Successfully removed role {} from user: {}", request.roleName(), keycloakId);
+        log.info("Successfully removed role {} from user: {}", request.roleName(), userId);
 
         user.getDomainEvents().forEach(userEventPublisher::publish);
         user.clearDomainEvents();

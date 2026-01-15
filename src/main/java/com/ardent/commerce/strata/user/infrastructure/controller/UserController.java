@@ -99,23 +99,21 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/role/assign")
+    @PutMapping("/{userId}/role/assign")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> assignUserRole(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateUserRoleRequest request) {
-        log.info("PUT /api/users/role/assign - Assign new role to user");
+    public ResponseEntity<?> assignUserRole(@PathVariable UUID userId, @Valid @RequestBody UpdateUserRoleRequest request) {
+        log.info("PUT /api/users/userId/role/assign - Assign new role to user");
 
-        UUID keycloakId = UUID.fromString(jwt.getSubject());
-        UserResponse response = userRoleService.assignUserRole(keycloakId, request);
+        UserResponse response = userRoleService.assignUserRole(userId, request);
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/role/remove")
+    @PutMapping("/{userId}/role/remove")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> removeUserRole(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateUserRoleRequest request) {
-        log.info("PUT /api/users/role/remove - Remove and existing role from user");
+    public ResponseEntity<?> removeUserRole(@PathVariable UUID userId, @Valid @RequestBody UpdateUserRoleRequest request) {
+        log.info("PUT /api/users/userId/role/remove - Remove and existing role from user");
 
-        UUID keycloakId = UUID.fromString(jwt.getSubject());
-        UserResponse response = userRoleService.removeUserRole(keycloakId, request);
+        UserResponse response = userRoleService.removeUserRole(userId, request);
         return ResponseEntity.ok(response);
     }
 

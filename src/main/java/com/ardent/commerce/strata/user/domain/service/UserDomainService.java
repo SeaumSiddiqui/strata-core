@@ -21,6 +21,17 @@ import java.util.UUID;
 public class UserDomainService {
     private final UserRepository userRepository;
 
+
+    public User fetchActiveByUserId(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new UserNotFoundException(userId));
+
+        if (!user.isActive()) {
+            throw new UserInactiveException(user.getKeycloakId());
+        }
+        return user;
+    }
+
     public User fetchActiveByKeycloakId(UUID keycloakId) {
         User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(()-> UserNotFoundException.byKeycloakId(keycloakId));
