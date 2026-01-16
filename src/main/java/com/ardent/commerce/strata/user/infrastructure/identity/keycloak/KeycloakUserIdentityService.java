@@ -3,7 +3,9 @@ package com.ardent.commerce.strata.user.infrastructure.identity.keycloak;
 import com.ardent.commerce.strata.shared.infrastructure.keycloak.KeycloakProperties;
 import com.ardent.commerce.strata.user.domain.exception.IdentityProviderException;
 import com.ardent.commerce.strata.user.domain.identity.UserIdentityService;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
@@ -64,39 +66,31 @@ public class KeycloakUserIdentityService implements UserIdentityService {
     }
 
     @Override
-    public void sendPasswordResetEmail(String email) {
-        log.info("Sending password reset instruction to: {}", email);
+    public void sendPasswordResetEmail(UUID keycloakId) {
+        log.info("Triggering password reset, sending instruction for: {}", keycloakId);
 
         try {
-            List<UserRepresentation> users = keycloak.realm(keycloakProperties.getRealm())
-                    .users().search(email, 0, 1);
+            String redirectUrl = "login page url";
 
-            if (users.isEmpty()) {
-                log.warn("user not found for password reset: {}", email);
-                return; // Silent return to prevent enumeration
-            }
-
-            UserRepresentation user = users.getFirst();
-
-            List<String> requiredActions = new ArrayList<>();
-            requiredActions.add("UPDATE_PASSWORD"); // Force password change on next login
-            user.setRequiredActions(requiredActions);
-
+            // Keycloak handles the rest:
+            // 1. Generates the token internally
+            // 2. Sends the email
+            // 3. Provides UI for password reset
             keycloak.realm(keycloakProperties.getRealm())
                     .users()
-                    .get(user.getId())
-                    .update(user);
+                    .get(keycloakId.toString())
+                    .executeActionsEmail(
+                            keycloakProperties.getClientId(),
+                            redirectUrl,
+                            List.of("UPDATE_PASSWORD")
+                    );
 
-            // Sending verification email
-            keycloak.realm(keycloakProperties.getRealm())
-                    .users()
-                    .get(user.getId())
-                    .executeActionsEmail(requiredActions);
+            log.info("Password reset email sent to user: {}", keycloakId);
 
-            log.info("Password reset email sent to: {}", email);
-
+        } catch (NotFoundException e) {
+            log.warn("User {} found in DB but does not exist in Keycloak", keycloakId);
         } catch (Exception e) {
-            log.error("Failed to sent password reset email: {}", email, e);
+            log.error("Failed to sent password reset email to user: {}", keycloakId, e);
             throw new IdentityProviderException("Failed to sent password reset email", e);
         }
     }

@@ -24,7 +24,6 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 @Service
 public class FindUserApplicationService {
-
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 

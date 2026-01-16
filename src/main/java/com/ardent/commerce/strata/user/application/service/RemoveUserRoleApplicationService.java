@@ -1,6 +1,7 @@
 package com.ardent.commerce.strata.user.application.service;
 
-import com.ardent.commerce.strata.user.application.dto.UpdateUserRoleRequest;
+import com.ardent.commerce.strata.shared.application.ApplicationService;
+import com.ardent.commerce.strata.user.application.command.RemoveUserRoleCommand;
 import com.ardent.commerce.strata.user.application.dto.UserResponse;
 import com.ardent.commerce.strata.user.domain.model.User;
 import com.ardent.commerce.strata.user.domain.model.UserRole;
@@ -12,15 +13,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 /**
  * Application Service: Manage user roles.
  * Default role - CUSTOMER assigned on creation, nonremovable.
  * Role ADMIN, STAFF can be assigned or removed.
 
  * Steps:
- * 1. Load aggregate with userId
+ * 1. Load aggregate with command userId
  * 2. Assign/Remove role
  * 3. Save
  * 4. Publish events
@@ -29,39 +28,23 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class ManageUserRoleApplicationService {
+public class RemoveUserRoleApplicationService implements ApplicationService<RemoveUserRoleCommand, UserResponse> {
     private final UserDomainService userDomainService;
     private final UserRepository userRepository;
     private final UserEventPublisher userEventPublisher;
     private final UserMapper userMapper;
 
+    @Override
     @Transactional
-    public UserResponse assignUserRole(UUID userId, UpdateUserRoleRequest request) {
-        log.info("Assigning new role {} to user: {}", request.roleName(), userId);
+    public UserResponse execute(RemoveUserRoleCommand command) {
+        log.info("Removing existing role {} from user: {}", command.roleName(), command.userId());
 
-        User user = userDomainService.fetchActiveByUserId(userId);
-        UserRole roleToAdd = UserRole.from(request.roleName());
-
-        user.assignRole(roleToAdd);
-        userRepository.save(user);
-        log.info("Successfully assigned new role {} to user: {}", request.roleName(), userId);
-
-        user.getDomainEvents().forEach(userEventPublisher::publish);
-        user.clearDomainEvents();
-
-        return userMapper.toResponse(user);
-    }
-
-    @Transactional
-    public UserResponse removeUserRole(UUID userId, UpdateUserRoleRequest request) {
-        log.info("Removing existing role {} from user: {}", request.roleName(), userId);
-
-        User user = userDomainService.fetchActiveByUserId(userId);
-        UserRole roleToRemove = UserRole.from(request.roleName());
+        User user = userDomainService.fetchActiveByUserId(command.userId());
+        UserRole roleToRemove = UserRole.from(command.roleName());
 
         user.removeRole(roleToRemove);
         userRepository.save(user);
-        log.info("Successfully removed role {} from user: {}", request.roleName(), userId);
+        log.info("Successfully removed role {} from user: {}", command.roleName(), command.userId());
 
         user.getDomainEvents().forEach(userEventPublisher::publish);
         user.clearDomainEvents();

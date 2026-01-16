@@ -2,6 +2,7 @@ package com.ardent.commerce.strata.user.domain.model;
 
 import com.ardent.commerce.strata.shared.domain.AggregateRoot;
 import com.ardent.commerce.strata.user.domain.event.*;
+import com.ardent.commerce.strata.user.domain.exception.DomainInvariantException;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -61,6 +62,11 @@ public class User extends AggregateRoot {
      * Called during user registration flow.
      */
     public static User create(UUID keycloakId, Email email, Phone phone, String firstName, String lastName, Set<UserRole> roles) {
+
+        if (roles == null || !roles.contains(UserRole.of(UserRole.RoleType.CUSTOMER))) {
+            throw new DomainInvariantException("New users must be assigned the default CUSTOMER role.");
+        }
+
         UserId id = UserId.generate();
         LocalDateTime now = LocalDateTime.now();
 
@@ -77,6 +83,10 @@ public class User extends AggregateRoot {
     public static User reconstruct(UserId id, UUID keycloakId, Email email, Phone phone, String firstName, String lastName,
                                    Set<UserRole> roles, LocalDateTime createdAt, LocalDateTime updatedAt, boolean isActive,
                                    LocalDateTime deletedAt) {
+        if (roles == null || !roles.contains(UserRole.of(UserRole.RoleType.CUSTOMER))) {
+            throw new IllegalStateException("Persistent state for User is invalid: missing default CUSTOMER role.");
+        }
+
         return new User(id, keycloakId, email, phone, firstName, lastName, roles, createdAt, updatedAt, isActive, deletedAt);
     }
 

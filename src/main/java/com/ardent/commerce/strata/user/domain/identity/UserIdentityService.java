@@ -14,5 +14,6 @@ public interface UserIdentityService {
 
     void updateKeycloakUserPassword(UUID keycloakId, String password);
 
-    void sendPasswordResetEmail(String email);
+    void sendPasswordResetEmail(UUID keycloakId);
+
 }

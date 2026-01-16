@@ -5,11 +5,11 @@ import com.ardent.commerce.strata.user.domain.exception.UserInactiveException;
 import com.ardent.commerce.strata.user.domain.exception.UserNotFoundException;
 import com.ardent.commerce.strata.user.domain.model.Email;
 import com.ardent.commerce.strata.user.domain.model.User;
-import com.ardent.commerce.strata.user.domain.model.UserRole;
+import com.ardent.commerce.strata.user.domain.model.UserId;
 import com.ardent.commerce.strata.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Set;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -21,9 +21,8 @@ import java.util.UUID;
 public class UserDomainService {
     private final UserRepository userRepository;
 
-
     public User fetchActiveByUserId(UUID userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(UserId.of(userId))
                 .orElseThrow(()-> new UserNotFoundException(userId));
 
         if (!user.isActive()) {
@@ -42,15 +41,14 @@ public class UserDomainService {
         return user;
     }
 
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(Email.of(email))
+                .filter(User::isActive); // Only returns if the user is active
+    }
+
     public void assertEmailIsUnique(Email newEmail) {
         if (userRepository.existsByEmail(newEmail)) {
             throw new DuplicateEmailException(newEmail.value());
-        }
-    }
-
-    public void assertBaseUserRole(Set<UserRole> roles) {
-        if (!roles.contains(UserRole.of(UserRole.RoleType.CUSTOMER))) {
-            throw new IllegalArgumentException("TODO: better exception need");
         }
     }
 

@@ -7,9 +7,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public record CreateUserRequest(
-        @NotNull(message = "Keycloak ID is required")
-        UUID keycloakId,
-
         @NotBlank(message = "Email is required")
         @Email(message = "Invalid email format")
         String email,

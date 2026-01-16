@@ -1,20 +1,23 @@
 package com.ardent.commerce.strata.user.infrastructure.controller;
 
-import com.ardent.commerce.strata.user.application.dto.*;
+import com.ardent.commerce.strata.user.application.command.DeleteUserCommand;
+import com.ardent.commerce.strata.user.application.command.UpdateUserCommand;
+import com.ardent.commerce.strata.user.application.command.UpdateUserEmailCommand;
+import com.ardent.commerce.strata.user.application.command.UpdateUserPasswordCommand;
+import com.ardent.commerce.strata.user.application.dto.UpdateUserEmailRequest;
+import com.ardent.commerce.strata.user.application.dto.UpdateUserPasswordRequest;
+import com.ardent.commerce.strata.user.application.dto.UpdateUserProfileRequest;
+import com.ardent.commerce.strata.user.application.dto.UserResponse;
 import com.ardent.commerce.strata.user.application.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-
-import static java.util.Objects.hash;
 
 /**
  * REST Controller: User endpoints.
@@ -22,59 +25,36 @@ import static java.util.Objects.hash;
  */
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api/users")
+@RequestMapping("/api/profile")
 @RestController
-public class UserController {
-
-    private final CreateUserApplicationService createUserService;
+public class UserProfileController {
     private final FindUserApplicationService findUserService;
     private final UpdateUserProfileApplicationService updateUserService;
     private final UpdateUserEmailApplicationService updateEmailService;
     private final UpdateUserPasswordApplicationService updatePasswordService;
-    private final ManageUserRoleApplicationService userRoleService;
     private final DeleteUserApplicationService deleteUserService;
 
-    @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        log.debug("Creating user with email hash: {}", hash(request.email()));
-
-        UserResponse response = createUserService.execute(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    /**
-     * Get current users profile. Self view (authenticated endpoint).
-     */
-    @GetMapping("/profile")
+    @GetMapping
     public ResponseEntity<UserResponse> getCurrentUserProfile(@AuthenticationPrincipal Jwt jwt) {
         log.info("GET /api/users/profile - Fetching user profile");
 
         UUID keycloakId = UUID.fromString(jwt.getSubject());
         UserResponse response = findUserService.findByKeycloakId(keycloakId);
+
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Get any user by ID (admin endpoint).
-     */
-    @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable UUID userId) {
-        log.info("GET /api/users/{} - Fetching user by ID", userId);
-
-        UserResponse response = findUserService.findById(userId);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Update current user profile. Self update (authenticated endpoint).
-     */
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateUserProfile (@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody UpdateUserProfileRequest request) {
         log.info("PUT /api/users/profile - Updating user profile");
 
-        UUID keycloakId = UUID.fromString(jwt.getSubject());
-        UserResponse response = updateUserService.execute(keycloakId, request);
+        UpdateUserCommand command = new UpdateUserCommand(
+                UUID.fromString(jwt.getSubject()),
+                request.firstName(),
+                request.lastName(),
+                request.phone());
+
+        UserResponse response = updateUserService.execute(command);
         return ResponseEntity.ok(response);
     }
 
@@ -85,8 +65,12 @@ public class UserController {
     public ResponseEntity<UserResponse> updateUserEmail(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateUserEmailRequest request) {
         log.info("PUT /api/users/email - Updating user email");
 
-        UUID keycloakId = UUID.fromString(jwt.getSubject());
-        UserResponse response = updateEmailService.execute(keycloakId, request);
+        UpdateUserEmailCommand command = new UpdateUserEmailCommand(
+                UUID.fromString(jwt.getSubject()),
+                request.email(),
+                request.password());
+
+        UserResponse response = updateEmailService.execute(command);
         return ResponseEntity.ok(response);
     }
 
@@ -94,35 +78,22 @@ public class UserController {
     public ResponseEntity<UserResponse> updateUserPassword(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateUserPasswordRequest request) {
         log.info("PUT api/users/password - Updating user password");
 
-        UUID keycloakId = UUID.fromString(jwt.getSubject());
-        UserResponse response = updatePasswordService.execute(keycloakId, request);
-        return ResponseEntity.ok(response);
-    }
+        UpdateUserPasswordCommand command = new UpdateUserPasswordCommand(
+                UUID.fromString(jwt.getSubject()),
+                request.currentPassword(),
+                request.newPassword());
 
-    @PutMapping("/{userId}/role/assign")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> assignUserRole(@PathVariable UUID userId, @Valid @RequestBody UpdateUserRoleRequest request) {
-        log.info("PUT /api/users/userId/role/assign - Assign new role to user");
-
-        UserResponse response = userRoleService.assignUserRole(userId, request);
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{userId}/role/remove")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> removeUserRole(@PathVariable UUID userId, @Valid @RequestBody UpdateUserRoleRequest request) {
-        log.info("PUT /api/users/userId/role/remove - Remove and existing role from user");
-
-        UserResponse response = userRoleService.removeUserRole(userId, request);
+        UserResponse response = updatePasswordService.execute(command);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteCurrentUser(@AuthenticationPrincipal Jwt jwt) {
         log.info("DELETE /api/users/delete - Deleting user");
-        UUID keycloakId = UUID.fromString(jwt.getSubject());
 
-        deleteUserService.execute(keycloakId);
+        DeleteUserCommand command = new DeleteUserCommand(UUID.fromString(jwt.getSubject()));
+
+        deleteUserService.execute(command);
         return ResponseEntity.noContent().build();
     }
 

@@ -1,5 +1,7 @@
 package com.ardent.commerce.strata.user.application.service;
 
+import com.ardent.commerce.strata.shared.application.ApplicationService;
+import com.ardent.commerce.strata.user.application.command.UpdateUserCommand;
 import com.ardent.commerce.strata.user.application.dto.UpdateUserProfileRequest;
 import com.ardent.commerce.strata.user.application.dto.UserResponse;
 import com.ardent.commerce.strata.user.domain.model.Phone;
@@ -26,22 +28,23 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class UpdateUserProfileApplicationService {
+public class UpdateUserProfileApplicationService implements ApplicationService<UpdateUserCommand, UserResponse> {
     private final UserDomainService userDomainService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserEventPublisher eventPublisher;
 
+    @Override
     @Transactional
-    public UserResponse execute(UUID keycloakId, UpdateUserProfileRequest request) {
-        User user = userDomainService.fetchActiveByKeycloakId(keycloakId);
+    public UserResponse execute(UpdateUserCommand command) {
+        User user = userDomainService.fetchActiveByKeycloakId(command.keycloakId());
 
         log.info("Updating user profile for ID: {}", user.getId().value());
 
         user.updateUserProfile(
-                request.firstName(),
-                request.lastName(),
-                Phone.of(request.phone())
+                command.firstName(),
+                command.lastName(),
+                Phone.of(command.phone())
                 );
 
         userRepository.save(user);
